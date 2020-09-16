@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: post
 title:  "Richard Marston's"
 ---
 # richardmarston.github.io
