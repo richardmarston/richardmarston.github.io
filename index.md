@@ -1,3 +1,7 @@
+---
+layout: default
+title:  "Richard Marston's"
+---
 # it begins. or does it?
 
 <ul>
