@@ -1,3 +1,7 @@
+---
+layout: default
+title:  "Richard Marston's"
+---
 # richardmarston.github.io
 <ul>
   {% for post in site.posts %}
