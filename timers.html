@@ -1,44 +1,136 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-p {
-  text-align: center;
-  font-size: 60px;
-  margin-top: 0px;
-}
-</style>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="utf-8"/>
+    <link rel="stylesheet" href="timers.css">
 </head>
 <body>
 
-<p id="demo"></p>
+<div id="1" class="timer"></div>
+<div id="2" class="timer"></div>
+<div id="3" class="timer"></div>
+<div id="4" class="timer"></div>
+<div id="5" class="timer"></div>
+<div id="6" class="timer"></div>
+<div id="7" class="timer"></div>
+<div id="8" class="timer"></div>
+<div id="9" class="timer"></div>
+<div id="10" class="timer"></div>
+<div id="11" class="timer"></div>
+<div id="12" class="timer"></div>
+<div id="13" class="timer"></div>
+<div id="14" class="timer"></div>
+<div id="15" class="timer"></div>
+<div id="16" class="timer"></div>
+<div id="17" class="timer"></div>
+<div id="18" class="timer"></div>
+<div id="19" class="timer"></div>
+<div id="20" class="timer"></div>
+<div id="21" class="timer"></div>
+<div id="22" class="timer"></div>
+<div id="23" class="timer"></div>
+<div id="24" class="timer"></div>
+<div id="25" class="timer"></div>
+<div id="26" class="timer"></div>
+<div id="27" class="timer"></div>
+<div id="28" class="timer"></div>
+<div id="29" class="timer"></div>
+<div id="30" class="timer"></div>
 
 <script>
+
+const RUNTIME = 15;
+
+function Timer(){
+   this.countDownDate = -1;
+   this.state = "waiting";
+   this.getState = function() {
+       return this.state;
+   }
+   this.start = function() {
+       this.countDownDate = new Date().getTime() + (1000 * 60 * RUNTIME);
+       this.state = "running";
+   }
+   this.reset = function() {
+       this.countDownDate = -1
+       this.state = "waiting";
+   }
+   this.getDisplay = function(now) {
+       if (this.state === "waiting") {
+           return "15:00";
+       }
+       else {
+           let distance = this.countDownDate - now;
+           if (distance < 0) {
+               if (distance > -(RUNTIME * 60 * 1000)) {
+                   this.state = "finished";
+               }
+               else {
+                   this.state = "overtime";
+                   return "!!";
+               }
+           }
+           let minutes = Math.trunc((distance % (1000 * 60 * 60)) / (1000 * 60));
+           let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+           return minutes + "m " + seconds + "s ";
+       }
+   }
+}
 // Set the date we're counting down to
-var countDownDate = new Date().getTime() + (1000 * 60 * 15);
+
+let timerDivs = document.querySelectorAll(".timer");
+var timers = [];
+
+const onClick = function(evt) {
+    let timer = timers[evt.target.getAttribute("timerClass")];
+    console.log(timer.getState());
+    if (timer.getState() === "waiting") {
+        timer.start();
+    }
+    else if (timer.getState() === "finished" || timer.getState() === "overtime") {
+        console.log("Click when finished");
+        timer.reset();
+    }
+}
+
+timerDivs.forEach((timerDiv, index)=>{
+    timers.push(new Timer());
+    timerDiv.setAttribute("timerClass", index);
+    timerDiv.onclick = onClick;
+});
 
 // Update the count down every 1 second
-var x = setInterval(function() {
+const x = setInterval(function() {
 
   // Get today's date and time
-  var now = new Date().getTime();
+  let now = new Date().getTime();
    
-  // Find the distance between now and the count down date
-  var distance = countDownDate - now;
-   
-  // Time calculations for days, hours, minutes and seconds
-  var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-  var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-   
-  // Output the result in an element with id="demo"
-  document.getElementById("demo").innerHTML =  minutes + "m " + seconds + "s ";
-   
-  // If the count down is over, write some text
-  if (distance < 0) {
-    clearInterval(x);
-    document.getElementById("demo").innerHTML = "FERTIG";
-  }
+  timerDivs.forEach(timerDiv=>{
+      let timer = timers[timerDiv.getAttribute("timerClass")]
+      timerDiv.innerHTML = "<p>" + timerDiv.id + "</p><p>" + timer.getDisplay(now) + "</p>";
+      if (timer.getState() === "finished") {
+          console.log("interval when finished");
+          timerDiv.classList.add("finished");
+          timerDiv.classList.remove("running");
+          timerDiv.classList.remove("overtime");
+      }
+      else if (timer.getState() === "running") {
+          timerDiv.classList.add("running");
+          timerDiv.classList.remove("finished");
+          timerDiv.classList.remove("overtime");
+      }
+      else if (timer.getState() === "overtime") {
+          timerDiv.classList.add("overtime");
+          timerDiv.classList.remove("running");
+          timerDiv.classList.remove("finished");
+      }
+      else if (timer.getState() === "waiting") {
+          timerDiv.classList.remove("running");
+          timerDiv.classList.remove("finished");
+          timerDiv.classList.remove("overtime");
+      }
+  });
+
 }, 1000);
 </script>
 
