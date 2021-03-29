@@ -57,8 +57,8 @@ function Timer(){
        this.state = "waiting";
    }
    this.makeTimeString = function(now) {
-       let minutes = Math.trunc((now % (1000 * 60 * 60)) / (1000 * 60));
-       let seconds = ('00' + Math.round(now / 1000) % 60).slice(-2);
+       let minutes = Math.floor((now % (1000 * 60 * 60)) / (1000 * 60));
+       let seconds = ('00' + Math.floor(now / 1000) % 60).slice(-2);
        return minutes + ":" + seconds;
    }
    this.getDisplay = function(now) {
