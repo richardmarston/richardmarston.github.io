@@ -39,40 +39,41 @@
 
 <script>
 
-const RUNTIME = 15;
+const RUNTIME = (1 * 60 * 1000);
+const READYTIME = (2 * 60 * 1000);
 
 function Timer(){
-   this.countDownDate = -1;
+   this.startDate = -1;
    this.state = "waiting";
    this.getState = function() {
        return this.state;
    }
    this.start = function() {
-       this.countDownDate = new Date().getTime() + (1000 * 60 * RUNTIME);
+       this.startDate = new Date().getTime();
        this.state = "running";
    }
    this.reset = function() {
        this.countDownDate = -1
        this.state = "waiting";
    }
+   this.makeTimeString = function(now) {
+       let minutes = Math.trunc((now % (1000 * 60 * 60)) / (1000 * 60));
+       let seconds = ('00' + Math.round(now / 1000) % 60).slice(-2);
+       return minutes + ":" + seconds;
+   }
    this.getDisplay = function(now) {
        if (this.state === "waiting") {
-           return "15:00";
+           return "0:00";
        }
        else {
-           let distance = this.countDownDate - now;
-           if (distance < 0) {
-               if (distance > -(RUNTIME * 60 * 1000)) {
-                   this.state = "finished";
-               }
-               else {
-                   this.state = "overtime";
-                   return "!!";
-               }
+           let distance = now - this.startDate;
+           if (distance > READYTIME) {
+               this.state = "overtime";
            }
-           let minutes = Math.trunc((distance % (1000 * 60 * 60)) / (1000 * 60));
-           let seconds = Math.floor((distance % (1000 * 60)) / 1000);
-           return minutes + "m " + seconds + "s ";
+           else if (distance > RUNTIME) {
+               this.state = "finished";
+           }
+           return this.makeTimeString(distance);
        }
    }
 }
