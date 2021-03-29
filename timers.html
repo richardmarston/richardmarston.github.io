@@ -41,57 +41,86 @@
 
 const RUNTIME = (15 * 60 * 1000);
 const READYTIME = (30 * 60 * 1000);
+const RESETIFTWICETIME = 2000;
 
 function Timer(){
-   this.startDate = -1;
-   this.state = "waiting";
-   this.getState = function() {
-       return this.state;
-   }
-   this.start = function() {
-       this.startDate = new Date().getTime();
-       this.state = "running";
-   }
-   this.reset = function() {
-       this.countDownDate = -1
-       this.state = "waiting";
-   }
-   this.makeTimeString = function(now) {
-       let minutes = Math.floor((now % (1000 * 60 * 60)) / (1000 * 60));
-       let seconds = ('00' + Math.floor(now / 1000) % 60).slice(-2);
-       return minutes + ":" + seconds;
-   }
-   this.getDisplay = function(now) {
-       if (this.state === "waiting") {
-           return "0:00";
-       }
-       else {
-           let distance = now - this.startDate;
-           if (distance > READYTIME) {
-               this.state = "overtime";
-           }
-           else if (distance > RUNTIME) {
-               this.state = "finished";
-           }
-           return this.makeTimeString(distance);
-       }
-   }
+    this.startDate = -1;
+    this.lastResetIfTwiceDate = -1;
+    this.state = "waiting";
+    this.getState = function() {
+        return this.state;
+    }
+    this.start = function() {
+        this.startDate = new Date().getTime();
+        /* round all start times to nearest second
+           so they all update together */
+        this.startDate = this.startDate - (this.startDate % 1000);
+        this.state = "running";
+    }
+    this.reset = function() {
+        this.countDownDate = -1
+        this.state = "waiting";
+    }
+    this.resetIfTwice = function() {
+        let lastResetDate = this.lastResetIfTwiceDate;
+        this.lastResetIfTwiceDate = new Date().getTime();
+        let difference = this.lastResetIfTwiceDate - lastResetDate;
+        if (difference < RESETIFTWICETIME) {
+            this.reset();
+        }
+        else {
+            this.state = "running_half_reset";
+        }
+    }
+    this.cancelAfterResetIfTwiceTime = function() {
+        let now = new Date().getTime();
+        let difference = now - this.lastResetIfTwiceDate;
+        if (difference > RESETIFTWICETIME) {
+            this.state = "running";
+        }
+    }
+    this.makeTimeString = function(now) {
+        let minutes = Math.floor((now % (1000 * 60 * 60)) / (1000 * 60));
+        let seconds = ('00' + Math.floor(now / 1000) % 60).slice(-2);
+        return minutes + ":" + seconds;
+    }
+    this.getDisplay = function(now) {
+        if (this.state === "waiting") {
+            return "0:00";
+        }
+        else if (this.state === "running_half_reset") {
+            return "<p>Click again</p><p>to cancel</p>";
+        }
+        else {
+            let distance = now - this.startDate;
+            if (distance > READYTIME) {
+                this.state = "overtime";
+            }
+            else if (distance > RUNTIME) {
+                this.state = "finished";
+            }
+            return this.makeTimeString(distance);
+        }
+    }
+    this.clickMe = function(evt) {
+        if (this.state === "waiting") {
+            this.start();
+        }
+        else if (this.state === "running" || this.state === "running_half_reset") {
+            this.resetIfTwice();
+        }
+        else if (this.state === "finished" || this.state === "overtime") {
+            this.reset();
+        }
+    }
 }
-// Set the date we're counting down to
 
 let timerDivs = document.querySelectorAll(".timer");
 var timers = [];
 
 const onClick = function(evt) {
     let timer = timers[evt.target.getAttribute("timerClass")];
-    console.log(timer.getState());
-    if (timer.getState() === "waiting") {
-        timer.start();
-    }
-    else if (timer.getState() === "finished" || timer.getState() === "overtime") {
-        console.log("Click when finished");
-        timer.reset();
-    }
+    timer.clickMe();
 }
 
 timerDivs.forEach((timerDiv, index)=>{
@@ -100,39 +129,25 @@ timerDivs.forEach((timerDiv, index)=>{
     timerDiv.onclick = onClick;
 });
 
-// Update the count down every 1 second
+// Update the count down
 const x = setInterval(function() {
 
-  // Get today's date and time
-  let now = new Date().getTime();
-   
-  timerDivs.forEach(timerDiv=>{
-      let timer = timers[timerDiv.getAttribute("timerClass")]
-      timerDiv.innerHTML = "<p>" + timerDiv.id + "</p><p>" + timer.getDisplay(now) + "</p>";
-      if (timer.getState() === "finished") {
-          console.log("interval when finished");
-          timerDiv.classList.add("finished");
-          timerDiv.classList.remove("running");
-          timerDiv.classList.remove("overtime");
-      }
-      else if (timer.getState() === "running") {
-          timerDiv.classList.add("running");
-          timerDiv.classList.remove("finished");
-          timerDiv.classList.remove("overtime");
-      }
-      else if (timer.getState() === "overtime") {
-          timerDiv.classList.add("overtime");
-          timerDiv.classList.remove("running");
-          timerDiv.classList.remove("finished");
-      }
-      else if (timer.getState() === "waiting") {
-          timerDiv.classList.remove("running");
-          timerDiv.classList.remove("finished");
-          timerDiv.classList.remove("overtime");
-      }
-  });
+    // Get today's date and time
+    let now = new Date().getTime();
 
-}, 1000);
+    timerDivs.forEach(timerDiv=>{
+        let timer = timers[timerDiv.getAttribute("timerClass")]
+        timerDiv.innerHTML = "<p>" + timerDiv.id + "</p><p>" + timer.getDisplay(now) + "</p>";
+        let possibleStates = [ "waiting", "finished", "running", "running_half_reset", "overtime", ];
+        possibleStates.forEach(state => {
+            timerDiv.classList.remove(state);
+        });
+        timerDiv.classList.add(timer.getState());
+        if (timer.getState() === "running_half_reset") {
+            timer.cancelAfterResetIfTwiceTime(now);
+        }
+    });
+}, 200);
 </script>
 
 </body>
